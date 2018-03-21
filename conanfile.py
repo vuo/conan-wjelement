@@ -6,7 +6,7 @@ class WJElementConan(ConanFile):
     name = 'wjelement'
 
     source_version = '1.2'
-    package_version = '1'
+    package_version = '2'
     version = '%s-%s' % (source_version, package_version)
 
     requires = 'llvm/3.3-1@vuo/stable'
@@ -33,6 +33,7 @@ class WJElementConan(ConanFile):
     def fixId(self, library):
         if platform.system() == 'Darwin':
             self.run('install_name_tool -id @rpath/lib%s.dylib lib%s.dylib' % (library, library))
+            self.run('install_name_tool -rpath %s @loader_path lib%s.dylib' % (os.getcwd(), library))
         elif platform.system() == 'Linux':
             patchelf = self.deps_cpp_info['patchelf'].rootpath + '/bin/patchelf'
             self.run('%s --set-soname lib%s.so lib%s.so' % (patchelf, library, library))
