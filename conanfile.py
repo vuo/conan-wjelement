@@ -9,7 +9,7 @@ class WJElementConan(ConanFile):
     package_version = '3'
     version = '%s-%s' % (source_version, package_version)
 
-    requires = 'llvm/3.3-1@vuo/stable'
+    requires = 'llvm/3.3-2@vuo/stable'
     settings = 'os', 'compiler', 'build_type', 'arch'
     url = 'https://github.com/netmail-open/wjelement'
     license = 'https://github.com/netmail-open/wjelement/blob/master/COPYING'
