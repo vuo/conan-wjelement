@@ -30,6 +30,8 @@ class WJElementConan(ConanFile):
         tools.get('https://github.com/netmail-open/wjelement/archive/v%s.tar.gz' % self.source_version,
                   sha256='5568d0cfcbeaca232bb61c2aeaf8860b4e8f09f9cccacb9adf3e4bc8de989d5f')
 
+        self.run('mv %s/COPYING.LESSER %s/%s.txt' % (self.source_dir, self.source_dir, self.name))
+
     def fixId(self, library):
         if platform.system() == 'Darwin':
             self.run('install_name_tool -id @rpath/lib%s.dylib lib%s.dylib' % (library, library))
@@ -87,6 +89,8 @@ class WJElementConan(ConanFile):
 
         for f in self.libs:
             self.copy('lib%s.%s' % (f, libext), src='%s/lib' % self.install_dir, dst='lib')
+
+        self.copy('%s.txt' % self.name, src=self.source_dir, dst='license')
 
     def package_info(self):
         self.cpp_info.libs = self.libs
