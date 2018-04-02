@@ -6,7 +6,7 @@ class WJElementConan(ConanFile):
     name = 'wjelement'
 
     source_version = '1.2'
-    package_version = '2'
+    package_version = '3'
     version = '%s-%s' % (source_version, package_version)
 
     requires = 'llvm/3.3-1@vuo/stable'
