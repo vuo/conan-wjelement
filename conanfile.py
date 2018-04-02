@@ -1,5 +1,4 @@
 from conans import ConanFile, CMake, tools
-import os
 import platform
 
 class WJElementConan(ConanFile):
@@ -9,7 +8,8 @@ class WJElementConan(ConanFile):
     package_version = '3'
     version = '%s-%s' % (source_version, package_version)
 
-    requires = 'llvm/3.3-2@vuo/stable'
+    requires = 'llvm/3.3-2@vuo/stable', \
+               'vuoutils/1.0@vuo/stable'
     settings = 'os', 'compiler', 'build_type', 'arch'
     url = 'https://github.com/netmail-open/wjelement'
     license = 'https://github.com/netmail-open/wjelement/blob/master/COPYING'
@@ -17,7 +17,12 @@ class WJElementConan(ConanFile):
     source_dir = 'wjelement-%s' % source_version
     build_dir = '_build'
     install_dir = '_install'
-    libs = ['wjelement', 'wjreader', 'wjwriter', 'xpl']
+    libs = {
+        'wjelement': 1,
+        'wjreader': 1,
+        'wjwriter': 1,
+        'xpl': 1,
+    }
     generators = 'cmake'
 
     def requirements(self):
@@ -32,31 +37,8 @@ class WJElementConan(ConanFile):
 
         self.run('mv %s/COPYING.LESSER %s/%s.txt' % (self.source_dir, self.source_dir, self.name))
 
-    def fixId(self, library):
-        if platform.system() == 'Darwin':
-            self.run('install_name_tool -id @rpath/lib%s.dylib lib%s.dylib' % (library, library))
-            self.run('install_name_tool -rpath %s @loader_path lib%s.dylib' % (os.getcwd(), library))
-        elif platform.system() == 'Linux':
-            patchelf = self.deps_cpp_info['patchelf'].rootpath + '/bin/patchelf'
-            self.run('%s --set-soname lib%s.so lib%s.so' % (patchelf, library, library))
-            self.run('%s --remove-rpath lib%s.so' % (patchelf, library))
-        else:
-            raise Exception('Unknown platform "%s"' % platform.system())
-
-    def fixRefs(self, library):
-        if platform.system() == 'Darwin':
-            self.run('install_name_tool -change %s/libwjreader.1.dylib @rpath/libwjreader.dylib lib%s.dylib' % (os.getcwd(), library))
-            self.run('install_name_tool -change %s/libwjwriter.1.dylib @rpath/libwjwriter.dylib lib%s.dylib' % (os.getcwd(), library))
-            self.run('install_name_tool -change %s/libxpl.1.dylib @rpath/libxpl.dylib lib%s.dylib' % (os.getcwd(), library))
-        elif platform.system() == 'Linux':
-            patchelf = self.deps_cpp_info['patchelf'].rootpath + '/bin/patchelf'
-            self.run('%s --replace-needed libwjreader.so.1 libwjreader.so lib%s.so' % (patchelf, library))
-            self.run('%s --replace-needed libwjwriter.so.1 libwjwriter.so lib%s.so' % (patchelf, library))
-            self.run('%s --replace-needed libxpl.so.1 libxpl.so lib%s.so' % (patchelf, library))
-        else:
-            raise Exception('Unknown platform "%s"' % platform.system())
-
     def build(self):
+        import VuoUtils
         tools.mkdir(self.build_dir)
         with tools.chdir(self.build_dir):
             cmake = CMake(self)
@@ -73,9 +55,7 @@ class WJElementConan(ConanFile):
             cmake.build()
             cmake.install()
         with tools.chdir('%s/lib' % self.install_dir):
-            for f in self.libs:
-                self.fixId(f)
-                self.fixRefs(f)
+            VuoUtils.fixLibs(self.libs, self.deps_cpp_info)
 
     def package(self):
         self.copy('*.h', src='%s/include' % self.install_dir, dst='include/wjelement')
@@ -87,11 +67,11 @@ class WJElementConan(ConanFile):
         else:
             raise Exception('Unknown platform "%s"' % platform.system())
 
-        for f in self.libs:
+        for f in list(self.libs.keys()):
             self.copy('lib%s.%s' % (f, libext), src='%s/lib' % self.install_dir, dst='lib')
 
         self.copy('%s.txt' % self.name, src=self.source_dir, dst='license')
 
     def package_info(self):
-        self.cpp_info.libs = self.libs
+        self.cpp_info.libs = list(self.libs.keys())
         self.cpp_info.includedirs = ['include', 'include/wjelement']
