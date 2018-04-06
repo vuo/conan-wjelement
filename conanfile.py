@@ -4,8 +4,8 @@ import platform
 class WJElementConan(ConanFile):
     name = 'wjelement'
 
-    source_version = '1.2'
-    package_version = '3'
+    source_version = '1.3'
+    package_version = '1'
     version = '%s-%s' % (source_version, package_version)
 
     build_requires = 'llvm/3.3-5@vuo/stable', \
@@ -33,7 +33,7 @@ class WJElementConan(ConanFile):
 
     def source(self):
         tools.get('https://github.com/netmail-open/wjelement/archive/v%s.tar.gz' % self.source_version,
-                  sha256='5568d0cfcbeaca232bb61c2aeaf8860b4e8f09f9cccacb9adf3e4bc8de989d5f')
+                  sha256='63f588777e5cee58e17206e454aa5ab46486e27f416b3b92aba098896472ee56')
 
         self.run('mv %s/COPYING.LESSER %s/%s.txt' % (self.source_dir, self.source_dir, self.name))
 
