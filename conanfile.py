@@ -5,11 +5,14 @@ class WJElementConan(ConanFile):
     name = 'wjelement'
 
     source_version = '1.3'
-    package_version = '1'
+    package_version = '2'
     version = '%s-%s' % (source_version, package_version)
 
-    build_requires = 'llvm/3.3-5@vuo/stable', \
-               'vuoutils/1.0@vuo/stable'
+    build_requires = (
+        'llvm/5.0.2-1@vuo/stable',
+        'macos-sdk/11.0-0@vuo/stable',
+        'vuoutils/1.2@vuo/stable',
+    )
     settings = 'os', 'compiler', 'build_type', 'arch'
     url = 'https://github.com/netmail-open/wjelement'
     license = 'https://github.com/netmail-open/wjelement/blob/master/COPYING'
@@ -38,18 +41,18 @@ class WJElementConan(ConanFile):
         self.run('mv %s/COPYING.LESSER %s/%s.txt' % (self.source_dir, self.source_dir, self.name))
 
     def build(self):
+        cmake = CMake(self)
+        cmake.definitions['CMAKE_BUILD_TYPE'] = 'Release'
+        cmake.definitions['CMAKE_C_COMPILER'] = self.deps_cpp_info['llvm'].rootpath + '/bin/clang'
+        cmake.definitions['CMAKE_C_FLAGS'] = '-Oz -DNDEBUG'
+        cmake.definitions['CMAKE_OSX_ARCHITECTURES'] = 'x86_64;arm64'
+        cmake.definitions['CMAKE_OSX_DEPLOYMENT_TARGET'] = '10.11'
+        cmake.definitions['CMAKE_OSX_SYSROOT'] = self.deps_cpp_info['macos-sdk'].rootpath
+        cmake.definitions['CMAKE_INSTALL_PREFIX'] = '../%s' % self.install_dir
+
         import VuoUtils
         tools.mkdir(self.build_dir)
         with tools.chdir(self.build_dir):
-            cmake = CMake(self)
-
-            cmake.definitions['CMAKE_BUILD_TYPE'] = 'Release'
-            cmake.definitions['CMAKE_C_COMPILER']   = self.deps_cpp_info['llvm'].rootpath + '/bin/clang'
-            cmake.definitions['CMAKE_C_FLAGS'] = '-Oz -DNDEBUG'
-            cmake.definitions['CMAKE_OSX_ARCHITECTURES'] = 'x86_64'
-            cmake.definitions['CMAKE_OSX_DEPLOYMENT_TARGET'] = '10.10'
-            cmake.definitions['CMAKE_INSTALL_PREFIX'] = '../%s' % self.install_dir
-
             cmake.configure(source_dir='../%s' % self.source_dir,
                             build_dir='.')
             cmake.build()
